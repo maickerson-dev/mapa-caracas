@@ -2,59 +2,86 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<!-- Meta tag crucial para que el celular no renderice la web diminuta -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>Centros de Acopio - Caracas</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 <style>
   * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; height: 100%; font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+  html, body { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #f8f9fa; }
   #app { display: flex; flex-direction: column; height: 100%; }
-  header { padding: 14px 18px; background: #1a1a2e; color: #fff; flex-shrink: 0; }
-  header h1 { margin: 0; font-size: 18px; }
-  header p { margin: 4px 0 0; font-size: 13px; color: #cfd2e0; }
-  .legend { display: flex; gap: 16px; padding: 8px 18px; background: #f4f4f7; font-size: 12px; border-bottom: 1px solid #ddd; flex-shrink: 0; flex-wrap: wrap; }
-  .legend span { display: inline-flex; align-items: center; gap: 6px; }
-  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  
+  header { padding: 16px; background: #1a1a2e; color: #fff; flex-shrink: 0; text-align: center; }
+  header h1 { margin: 0; font-size: 20px; font-weight: 700; }
+  header p { margin: 6px 0 0; font-size: 13px; color: #cfd2e0; line-height: 1.4; }
+  
+  .legend { display: flex; gap: 14px; padding: 10px 16px; background: #f1f3f5; font-size: 12px; border-bottom: 1px solid #e9ecef; flex-shrink: 0; flex-wrap: wrap; justify-content: center; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
   .dot.exact { background: #2e7d32; }
   .dot.approx { background: #e67e22; }
 
   #main { flex: 1; display: flex; min-height: 0; }
 
-  #sidebar { width: 340px; flex-shrink: 0; border-right: 1px solid #ddd; display: flex; flex-direction: column; background: #fff; }
-  #search { padding: 10px; border-bottom: 1px solid #eee; flex-shrink: 0; }
-  #search input { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; }
+  /* Vista de Escritorio por defecto */
+  #sidebar { width: 360px; flex-shrink: 0; border-right: 1px solid #dee2e6; display: flex; flex-direction: column; background: #fff; }
+  #search { padding: 12px; border-bottom: 1px solid #efefef; flex-shrink: 0; }
+  #search input { width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 8px; font-size: 15px; -webkit-appearance: none; }
+  #search input:focus { border-color: #3355dd; outline: none; }
+  
   #list { flex: 1; overflow-y: auto; }
-  .item { padding: 10px 14px; border-bottom: 1px solid #f0f0f0; cursor: pointer; display: flex; align-items: flex-start; gap: 8px; }
-  .item:hover { background: #f7f7fb; }
-  .item.active { background: #e8eefc; border-left: 3px solid #3355dd; }
-  .item .dot { margin-top: 4px; flex-shrink: 0; }
-  .item .name { font-size: 13.5px; font-weight: 600; color: #222; }
-  .item .zona { font-size: 12px; color: #777; margin-top: 1px; }
-  .item .rubro-tag { font-size: 10.5px; color: #3355dd; margin-top: 2px; }
+  .item { padding: 14px 16px; border-bottom: 1px solid #f1f3f5; cursor: pointer; display: flex; align-items: flex-start; gap: 10px; }
+  .item:hover { background: #f8f9fa; }
+  .item.active { background: #edf2ff; border-left: 4px solid #3355dd; }
+  .item .dot { margin-top: 5px; flex-shrink: 0; }
+  .item .name { font-size: 15px; font-weight: 700; color: #212529; }
+  .item .zona { font-size: 13px; color: #6c757d; margin-top: 2px; }
+  .item .rubro-tag { font-size: 11.5px; color: #3355dd; font-weight: 600; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.02em; }
 
-  #preview { border-top: 2px solid #eee; padding: 14px; background: #fafafa; flex-shrink: 0; max-height: 45%; overflow-y: auto; }
-  #preview .ph-name { font-size: 15px; font-weight: 700; color: #1a1a2e; }
-  #preview .ph-zona { font-size: 13px; color: #555; margin: 4px 0 8px; }
-  #preview .ph-tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; color: #fff; display: inline-block; margin-right: 6px; margin-bottom: 6px;}
+  #preview { border-top: 2px solid #dee2e6; padding: 16px; background: #fff; flex-shrink: 0; max-height: 45%; overflow-y: auto; box-shadow: 0 -4px 10px rgba(0,0,0,0.03); }
+  #preview .ph-name { font-size: 17px; font-weight: 700; color: #1a1a2e; line-height: 1.3; }
+  #preview .ph-zona { font-size: 14px; color: #495057; margin: 4px 0 10px; }
+  #preview .ph-tag { font-size: 12px; padding: 4px 10px; border-radius: 20px; color: #fff; display: inline-block; margin-right: 6px; margin-bottom: 8px; font-weight: 500; }
   #preview .ph-tag.exact { background: #2e7d32; }
   #preview .ph-tag.approx { background: #e67e22; }
   #preview .ph-tag.rubro { background: #3355dd; }
-  #preview .ph-section-title { font-size: 12px; font-weight: 700; color: #333; margin-top: 10px; text-transform: uppercase; letter-spacing: 0.03em; }
-  #preview .ph-horario, #preview .ph-contacto { font-size: 13px; color: #333; margin-top: 3px; }
-  #preview ul.ph-items { margin: 4px 0 0; padding-left: 18px; font-size: 13px; color: #333; }
-  #preview ul.ph-items li { margin-bottom: 2px; }
-  #preview .ph-coords { font-size: 11px; color: #999; margin-top: 10px; font-family: monospace; }
-  #preview .ph-placeholder { color: #999; font-size: 13px; }
-  #preview .ph-link { display: inline-block; margin-top: 8px; font-size: 12px; color: #3355dd; text-decoration: none; }
+  #preview .ph-section-title { font-size: 12px; font-weight: 700; color: #868e96; margin-top: 14px; text-transform: uppercase; letter-spacing: 0.05em; }
+  #preview .ph-horario, #preview .ph-contacto { font-size: 14.5px; color: #212529; margin-top: 4px; font-weight: 500; }
+  #preview ul.ph-items { margin: 6px 0 0; padding-left: 20px; font-size: 14.5px; color: #212529; line-height: 1.5; }
+  #preview ul.ph-items li { margin-bottom: 4px; }
+  #preview .ph-coords { font-size: 11px; color: #adb5bd; margin-top: 14px; font-family: monospace; }
+  #preview .ph-placeholder { color: #6c757d; font-size: 14px; text-align: center; padding: 10px 0; line-height: 1.4; }
+  
+  /* Botón interactivo moderno para Google Maps en móvil y escritorio */
+  #preview .ph-btn-maps { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 14px; padding: 12px; background: #4285F4; color: #fff; font-size: 14px; font-weight: 700; text-decoration: none; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: background 0.2s; }
+  #preview .ph-btn-maps:active { background: #356ac3; }
 
   #map { flex: 1; }
-  .popup-title { font-weight: 700; margin-bottom: 2px; font-size: 13px; }
-  .popup-sub { font-size: 12px; color: #555; margin-bottom: 4px; }
-  .popup-hint { font-size: 11px; color: #3355dd; }
+  
+  /* Estilos de Popups del mapa mejorados para dedos */
+  .leaflet-popup-content-wrapper { border-radius: 8px; padding: 4px; }
+  .popup-title { font-weight: 700; margin-bottom: 3px; font-size: 14px; color: #1a1a2e; }
+  .popup-sub { font-size: 12px; color: #6c757d; margin-bottom: 6px; }
+  .popup-hint { font-size: 12px; color: #3355dd; font-weight: 600; display: inline-flex; align-items: center; gap: 2px; }
 
-  @media (max-width: 700px) {
+  /* --- ADAPTACIÓN ESTRICTA PARA CELULARES --- */
+  @media (max-width: 768px) {
     #main { flex-direction: column; }
-    #sidebar { width: 100%; height: 50%; border-right: none; border-bottom: 1px solid #ddd; }
-    #map { height: 50%; }
+    
+    /* El mapa ocupa el 40% superior para priorizar la navegación visual rápida */
+    #map { height: 40%; flex: none; }
+    
+    /* El sidebar pasa abajo ocupando el 60% restante */
+    #sidebar { width: 100%; height: 60%; border-right: none; }
+    
+    /* Hacemos la lista un poco más compacta en scroll pero con textos grandes */
+    .item { padding: 12px 16px; }
+    
+    /* Aseguramos que el contenedor de detalles no asfixie la lista en pantallas pequeñas */
+    #preview { max-height: 55%; border-top: 3px solid #dee2e6; background: #fafafa; }
+    
+    /* Ampliamos el botón en móviles para que sea imposible errar el toque */
+    #preview .ph-btn-maps { padding: 14px; font-size: 15px; }
   }
 </style>
 </head>
@@ -62,30 +89,33 @@
 <div id="app">
   <header>
     <h1>📍 Centros de Acopio - Caracas</h1>
-    <p>Toca un lugar en la lista o en el mapa para ver horarios y qué está recibiendo</p>
+    <p>Toca un lugar en la lista o en el mapa para ver qué reciben y cómo llegar</p>
   </header>
   <div class="legend">
     <span><i class="dot exact"></i> Ubicación exacta</span>
-    <span><i class="dot approx"></i> Ubicación aproximada (por zona)</span>
+    <span><i class="dot approx"></i> Ubicación aproximada</span>
   </div>
   <div id="main">
+    <div id="map"></div>
     <div id="sidebar">
-      <div id="search"><input type="text" id="searchInput" placeholder="Buscar lugar, zona o rubro..."></div>
+      <div id="search"><input type="text" id="searchInput" placeholder="Buscar por lugar, zona o insumo..."></div>
       <div id="list"></div>
       <div id="preview">
-        <div class="ph-placeholder">Selecciona un centro de acopio para ver sus horarios y qué está recibiendo.</div>
+        <div class="ph-placeholder">Selecciona un centro de acopio abajo o en el mapa para ver los detalles de recolección.</div>
       </div>
     </div>
-    <div id="map"></div>
   </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
-const places = [{"nombre": "Misenplas", "zona": "Chacao", "lat": 10.4939, "lng": -66.8524, "exact": false, "rubro": "Alimentación", "vigencia": "Operativo", "articulos": ["Envases de anime o aluminio (muchos)", "Cubiertos de plástico (muchos)", "Cajas para transportar (muchas)", "Arroz", "Verduras", "Proteinas (carne molida, atún, pollo)", "Condimentos"], "horarios": "10 am en adelante", "contacto": null}, {"nombre": "Furore ristorante", "zona": "Las Mercedes", "lat": 10.4862, "lng": -66.8555, "exact": false, "rubro": "Alimentación", "vigencia": "Operativo", "articulos": ["Envases de anime (muchos)", "Cubiertos de plástico (muchos)", "Arroz", "Pasta", "Vegetales", "Pescados", "Enlatados", "Carne molida", "Pasata y condimentos"], "horarios": "8 am en adelante", "contacto": null}, {"nombre": "Pepiteria 13", "zona": "Las Mercedes", "lat": 10.4865, "lng": -66.8548, "exact": false, "rubro": "Alimentación", "vigencia": "Operativo", "articulos": ["Envases de anime", "Papel aluminio", "Vegetales", "Arroz, pasta, harina de maíz", "Enlatados con abrefácil", "Cubiertoss plásticos", "Bolsas plásticas de asa"], "horarios": "8:30 am 8 pm aprox", "contacto": null}, {"nombre": "Chef campus", "zona": "Los Palos Grandes", "lat": 10.5008, "lng": -66.8471, "exact": false, "rubro": "Alimentación", "vigencia": "Operativo", "articulos": ["Botellones de agua potable", "Papel Aluminio", "Envoplast", "Envases de anime", "Jamón", "Tocineta", "Pasta corta", "Proteína (carne molida, pollo, atunes)", "Bolsas para cachitos", "Pasata, condimentos", "Vegetales"], "horarios": "9 am en adelante", "contacto": null}, {"nombre": "Antigua sede Azu Pastelería", "zona": "Las mercedes", "lat": 10.4852603, "lng": -66.864145, "exact": true, "rubro": "Alimentación", "vigencia": "Operativo", "articulos": ["Queso", "Harina de Maiz", "Jamón (mucho)", "Proteína (Carne molida, pollo, atunes)", "Margarina", "Aceite", "Envases de plástico (muchos)", "Papel aluminio (mucho)", "Envoplast", "Cubiertos de plástico (muchos)", "Enlatados, atún, diablitos", "Pasta corta", "Vegetales", "Pasata, condimentos"], "horarios": "8 am a 3 pm", "contacto": null}, {"nombre": "Colegio San Agustín", "zona": "El Marqués", "lat": 10.4915, "lng": -66.8318, "exact": false, "rubro": "Higiene y medicinas", "vigencia": "Operativo", "articulos": ["Insumos para higiene personal, zapatos, medicamentos (tensión, antialérgicos, malestar general)"], "horarios": "Por validar", "contacto": null}, {"nombre": "Colegio Cristo Rey de Altamira", "zona": "Altamira", "lat": 10.5057299, "lng": -66.8490399, "exact": true, "rubro": "Higiene, No perecederos y Medicinas", "vigencia": "Operativo", "articulos": ["Bebidas (agua, jugos, refrescos) Alimentos no perecederos (Arroz, pasta, Harina pan, Atún, Sal, Aceite, leche liquida, compotas)", "Galletas y dulces", "Productos de higiene perssonal (Pañales de adultos y niños, Toallas sanitarias, Toallas Humedas, Desodorantes, Shampoo, Jabon, cepillo y pasta dental.", "Medicamentos variados", "Ropa interior de Adultos y niños."], "horarios": "1 pm a 5 pm", "contacto": null}, {"nombre": "Centro Comercial El Recreo", "zona": "Av. Casanova, Sabana Grande, Caracas", "lat": 10.4931, "lng": -66.8712, "exact": false, "rubro": "Higiene, No perecederos y Medicinas", "vigencia": "Operativo", "articulos": ["Agua potable", "Higiene personal", "Medicinas de primera necesidad", "Alimentos no perecedero"], "horarios": "9am a 6pm", "contacto": null}, {"nombre": "Centro Tata Bello Campo", "zona": "Chacao", "lat": 10.494639, "lng": -66.8504954, "exact": true, "rubro": "Higiene, No perecederos y Medicinas", "vigencia": "Operativo", "articulos": ["Alimentos y agua (agua embotellada, sueros orales, enlatados con abrefacil: atún sardinas, granos; Galletas (soda y dulces, barras de cereal),", "Fórmulas infantiles y leche en polvo)", "Salud e higiene (gasas, vendas, alcohol, solución, ibuprofeno, acetaminofen, toallas humedas, pañales, toallas sanitarias, jabon, crema dental, repelente de mosquitos.", "Bolsas de basura resistentes para el traslado."], "horarios": "9 am a 6 pm", "contacto": null}, {"nombre": "Universidad Metropolitana Capellania Unimet", "zona": "Terrazas del Avila, Este de Caracas", "lat": 10.5145, "lng": -66.8195, "exact": false, "rubro": "Higiene, No perecederos y Medicinas", "vigencia": "Operativo", "articulos": ["Agua potable,", "Alimentos no perecederos,", "Insumos medicos,", "Kit de cuidado personal"], "horarios": "8 am a 6 pm hasta el 03/06", "contacto": null}, {"nombre": "Colegio Mater Salvatoris", "zona": "Las Mercedes", "lat": 10.487, "lng": -66.857, "exact": false, "rubro": "Higiene, No perecederos y Medicinas", "vigencia": "Operativo", "articulos": ["Bolsas de Laparotomia", "Gel ultrasonido", "Adhesivo médico", "Gasas", "Agua Oxigenada", "Leche en polvo, compotas, galletas", "Guantes", "Tapabocas", "Desinfectante", "Cloro", "Kit de higiene personal (papel higiénico, toallas sanitarias, toallas húmedas, cepillo de dientes, crema dental, pañales de adultos y bebés)"], "horarios": "3 pm a 6 pm", "contacto": null}, {"nombre": "Universidad Moteavila", "zona": "Boleita", "lat": 10.5026525, "lng": -66.8177383, "exact": true, "rubro": "Insumos médicos", "vigencia": "Operativo", "articulos": ["Insumos médicos (alcohol, agua oxigenada, antihipertensivos, antialérgicos, antiinflamatorios, antiácidos, dipirona, diclofenac, jeringas, gasas, algodón, solución salina 0,9%, alimentos no perecederos)."], "horarios": "10 am A 3 pm", "contacto": null}, {"nombre": "Plaza Los Palos Grandes", "zona": "Urbanización Los Palos Grandes, Chacao", "lat": 10.501, "lng": -66.8465, "exact": false, "rubro": "Insumos médicos", "vigencia": "Operativo", "articulos": ["Ofrecen atención primaria para disminuir afluencia en centros hospitalarios."], "horarios": "Todo el día", "contacto": null}, {"nombre": "Sagrada Familia", "zona": "Av. Casanova, El Recreo", "lat": 10.4934, "lng": -66.8709, "exact": false, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Materiales de rescate", "Agua potable y suero", "Alimentos no perecedero"], "horarios": "10am a 4pm", "contacto": null}, {"nombre": "Club Santa Paula", "zona": "Av. circunvalación del Sol. Urb. Santa Paula, El Cafetal.", "lat": 10.46618, "lng": -66.8359616, "exact": true, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Alimentos no perecederos", "Cajas y bolsas", "Medicinas, guantes quirúrgicos", "Agua y bebidas con electrolitos", "Ropa, sábanas y toallas"], "horarios": "10am a 4pm", "contacto": null}, {"nombre": "Instituto de Diseño de Caracas La Castellana", "zona": "Chacao", "lat": 10.501, "lng": -66.8544, "exact": false, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Agua potable en presentación individual,", "Alimentos no peredederos (enlatados con abrefacil, barras energeticas, arroz, pasta, harina, granos, galletas, frutos secos)", "Ropa y mantas limpias, organizadas por talla si es posible,", "Botiquín de primeros auxilios (gasas, guatas, alcohol, antisepticos, analgesicos básico solucion 0.9% y 0.45%, mascarillas para nebulizar, duovent 15 ml, dextrosa al 5%) .", "Tela para Sábanas."], "horarios": "7 am en adelante", "contacto": null}, {"nombre": "Congio San Ignacio  Casa Loyola", "zona": "Chacao", "lat": 10.4945, "lng": -66.853, "exact": false, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Salud (suero fisiológico, gasa vendas, agua oxigenada, Alcohol, Guantes de latex)", "Alimentos (no perecederos, barras energeticas, formula de nutricion infantil, agua potable)", "Logística y Abrigo (Cobijas, Sábanas, Carpas, Sacos de dormir, Colchonetas, Mantas térmicas, impermebles)", "Herramientas (Picos, palas, mandarrias, martillos, Guantes de cosntrucción, Cascos, taladros, piquetas, tapabocas, linternas, pilas, Esmeril de contacto, Sierras)", "Tecnología (antenas starlink  mini, Estaciones de entrega portatil (ecoflow o similares)"], "horarios": "9 am a 5 pm", "contacto": null}, {"nombre": "Voluntarios El bosque", "zona": "El bosque diagonal al club chino y el Rest Dinasty en un porton verde.", "lat": 10.497835, "lng": -66.867363, "exact": true, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Medicamentos", "Insumos médicos", "Kit de higiene personal adultos, y niños", "Pan de Sandwich, Riquesa, diablitos, Galletas, Compotas", "Kit Lúdicos para niños (juguetes, crayones, libros para colorear, juegos de mesa)", "Dinero"], "horarios": "Desde las 9 am aprox", "contacto": "+584122545340"}, {"nombre": "Universidad Católica Andrés Bello (UCAB)", "zona": "Estacionamiento de la Iglesia UCAB. Av. Teherán, Montalbán", "lat": 10.4784, "lng": -66.9192, "exact": false, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Alimentos no perecederos", "Medicinas (Dipirona, Vitamina K, Alcohol, Solución 09) Gasas y vendas", "Herramientas", "Ropa, sábanas y toallas"], "horarios": "Por validar", "contacto": null}, {"nombre": "Bajo el Arbol Quinta Arboleda La Castellana", "zona": "La Castellana", "lat": 10.5019305, "lng": -66.8565855, "exact": true, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Agua", "Alimentos no perecederos", "Higiene personal", "Insumos medicos", "Linternas y baterías externas, guantes de cosntrucción, cascos,", "Sábanas y almohadas."], "horarios": "Desde las 9 am aprox", "contacto": null}, {"nombre": "Iglesia Chiquinquirá", "zona": "La Florida", "lat": 10.501564, "lng": -66.8765383, "exact": true, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Agua", "Alimentos no perecederos", "Insumos medicos", "Primeros auxilios", "Guantes de seguridad, linternas, cascos, herramientas, lonas, carpas", "Cobijas, almohadas"], "horarios": "Desde las 9 am aprox", "contacto": null}, {"nombre": "Sagrada Familia", "zona": "La Tahona", "lat": 10.4384215, "lng": -66.8566303, "exact": true, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Alimentos no perecederos", "Alimento para mascotas", "Medicinas", "Herramientas", "Ropa, sábanas y toallas"], "horarios": "9:30am a 12:30pm / 2:30pm a 6:30pm", "contacto": null}, {"nombre": "Plaza Alfredo Sadel", "zona": "Las Mercedes", "lat": 10.482008, "lng": -66.8613349, "exact": true, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Linternas y baterías", "Alimentos no perecederos", "Ropa", "Comida preparada (en envases desechables)"], "horarios": "8am - 6pm", "contacto": null}, {"nombre": "Tu Gruero AV.  El Carmen Los Dos Caminos", "zona": "Los dos caminos", "lat": 10.4959145, "lng": -66.8305498, "exact": true, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Agua", "Alimentos no perecederos", "Insumos medicos", "Primeros auxilios", "Guantes de seguridad, linternas, cascos, herramientas, lonas, carpas", "Cobijas, almohadas", "Dinero"], "horarios": "No especificado", "contacto": "+584129428693"}, {"nombre": "Parque del Este", "zona": "Miranda", "lat": 10.4975, "lng": -66.8395, "exact": false, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": [], "horarios": "Todo el día", "contacto": null}, {"nombre": "Cáritas venezuela Cede Nacional Montalbán", "zona": "Montalbán", "lat": 10.479, "lng": -66.9185, "exact": false, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Bebidas (agua potable, pastillas o sistemas de potabilización)", "Alimentos no perecederos (Arroz, pasta, Harina pan, Atún, sardinas, granos enlatados, compotas)", "Productos de higiene personal (Pañales de adultos y niños, Toallas sanitarias, Toallas Húmedas, Desodorantes, Shampoo, Jabón, cepillo y pasta dental.", "Medicamentos de primera necesidad", "Colchonetas, sábanas, linternas, baterías.", "Dinero.", "Voluntariado."], "horarios": "Todo el día", "contacto": null}, {"nombre": "Iglesia La Paz", "zona": "Montalbán I, Municipio Libertador", "lat": 10.4805, "lng": -66.916, "exact": false, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Alimentos no perecederos", "Cajas y bolsas, cinta de embalar, marcadores, Hojas blancas", "Medicinas, guantes quirúrgicos", "Agua potable", "Ropa, sábanas y toallas"], "horarios": "9:30am a 12:30pm / 2:30pm a 6:30pm", "contacto": null}, {"nombre": "Universidad Central de Venezuela (UCV)", "zona": "Plaza del Rectorado de la Universidad.", "lat": 10.4913, "lng": -66.8905, "exact": false, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Alimentos no perecederos", "Cajas y bolsas, cinta de embalar, marcadores, Hojas blancas", "Medicinas, guantes quirúrgicos", "Agua potable", "Ropa, sábanas y toallas"], "horarios": "Todo el día", "contacto": null}, {"nombre": "Sede del Sistema de Orquestas y Coros", "zona": "Quebrada Onda", "lat": 10.5058, "lng": -66.9166, "exact": false, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Cobijas y Sabanas", "Alimentos no perecederos", "Marcadores y cinta adhesiva"], "horarios": "9am - 3pm", "contacto": null}, {"nombre": "Hogar bambi", "zona": "San Bernardino", "lat": 10.5115, "lng": -66.904, "exact": false, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Sabanas, toallas", "Fórmula infantil, leche en polvo", "Cunas armables tipo graco"], "horarios": "8 am en adelante", "contacto": "+584143081107"}, {"nombre": "Plaza Francia de Altamira", "zona": "Urbanización Altamira, Chacao", "lat": 10.4975, "lng": -66.8489, "exact": false, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Alimentos no perecederos", "Kit de Higiene personal", "Medicamentos de uso común", "Mantas, Carpas, Colchones, Sleeping bag, linternas"], "horarios": "Todo el día", "contacto": null}, {"nombre": "Parroquia El Buen Pastor", "zona": "Urbanización Bello Campo, Chacao", "lat": 10.495, "lng": -66.85, "exact": false, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Alimentos no perecederos", "Alimento para mascotas", "Medicinas", "Herramientas", "Ropa, sábanas y toallas"], "horarios": "Todo el día", "contacto": null}]
-;
+// Mantengo exactamente tu misma base de datos intacta
+const places = [{"nombre": "Misenplas", "zona": "Chacao", "lat": 10.4939, "lng": -66.8524, "exact": false, "rubro": "Alimentación", "vigencia": "Operativo", "articulos": ["Envases de anime o aluminio (muchos)", "Cubiertos de plástico (muchos)", "Cajas para transportar (muchas)", "Arroz", "Verduras", "Proteinas (carne molida, atún, pollo)", "Condimentos"], "horarios": "10 am en adelante", "contacto": null}, {"nombre": "Furore ristorante", "zona": "Las Mercedes", "lat": 10.4862, "lng": -66.8555, "exact": false, "rubro": "Alimentación", "vigencia": "Operativo", "articulos": ["Envases de anime (muchos)", "Cubiertos de plástico (muchos)", "Arroz", "Pasta", "Vegetales", "Pescados", "Enlatados", "Carne molida", "Pasata y condimentos"], "horarios": "8 am en adelante", "contacto": null}, {"nombre": "Pepiteria 13", "zona": "Las Mercedes", "lat": 10.4865, "lng": -66.8548, "exact": false, "rubro": "Alimentación", "vigencia": "Operativo", "articulos": ["Envases de anime", "Papel aluminio", "Vegetales", "Arroz, pasta, harina de maíz", "Enlatados con abrefácil", "Cubiertoss plásticos", "Bolsas plásticas de asa"], "horarios": "8:30 am 8 pm aprox", "contacto": null}, {"nombre": "Chef campus", "zona": "Los Palos Grandes", "lat": 10.5008, "lng": -66.8471, "exact": false, "rubro": "Alimentación", "vigencia": "Operativo", "articulos": ["Botellones de agua potable", "Papel Aluminio", "Envoplast", "Envases de anime", "Jamón", "Tocineta", "Pasta corta", "Proteína (carne molida, pollo, atunes)", "Bolsas para cachitos", "Pasata, condimentos", "Vegetales"], "horarios": "9 am en adelante", "contacto": null}, {"nombre": "Antigua sede Azu Pastelería", "zona": "Las mercedes", "lat": 10.4852603, "lng": -66.864145, "exact": true, "rubro": "Alimentación", "vigencia": "Operativo", "articulos": ["Queso", "Harina de Maiz", "Jamón (mucho)", "Proteína (Carne molida, pollo, atunes)", "Margarina", "Aceite", "Envases de plástico (muchos)", "Papel aluminio (mucho)", "Envoplast", "Cubiertos de plástico (muchos)", "Enlatados, atún, diablitos", "Pasta corta", "Vegetales", "Pasata, condimentos"], "horarios": "8 am a 3 pm", "contacto": null}, {"nombre": "Colegio San Agustín", "zona": "El Marqués", "lat": 10.4915, "lng": -66.8318, "exact": false, "rubro": "Higiene y medicinas", "vigencia": "Operativo", "articulos": ["Insumos para higiene personal, zapatos, medicamentos (tensión, antialérgicos, malestar general)"], "horarios": "Por validar", "contacto": null}, {"nombre": "Colegio Cristo Rey de Altamira", "zona": "Altamira", "lat": 10.5057299, "lng": -66.8490399, "exact": true, "rubro": "Higiene, No perecederos y Medicinas", "vigencia": "Operativo", "articulos": ["Bebidas (agua, jugos, refrescos) Alimentos no perecederos (Arroz, pasta, Harina pan, Atún, Sal, Aceite, leche liquida, compotas)", "Galletas y dulces", "Productos de higiene perssonal (Pañales de adultos y niños, Toallas sanitarias, Toallas Humedas, Desodorantes, Shampoo, Jabon, cepillo y pasta dental.", "Medicamentos variados", "Ropa interior de Adultos y niños."], "horarios": "1 pm a 5 pm", "contacto": null}, {"nombre": "Centro Comercial El Recreo", "zona": "Av. Casanova, Sabana Grande, Caracas", "lat": 10.4931, "lng": -66.8712, "exact": false, "rubro": "Higiene, No perecederos y Medicinas", "vigencia": "Operativo", "articulos": ["Agua potable", "Higiene personal", "Medicinas de primera necesidad", "Alimentos no perecedero"], "horarios": "9am a 6pm", "contacto": null}, {"nombre": "Centro Tata Bello Campo", "zona": "Chacao", "lat": 10.494639, "lng": -66.8504954, "exact": true, "rubro": "Higiene, No perecederos y Medicinas", "vigencia": "Operativo", "articulos": ["Alimentos y agua (agua embotellada, sueros orales, enlatados con abrefacil: atún sardinas, granos; Galletas (soda y dulces, barras de cereal),", "Fórmulas infantiles y leche en polvo)", "Salud e higiene (gasas, vendas, alcohol, solución, ibuprofeno, acetaminofen, toallas humedas, pañales, toallas sanitarias, jabon, crema dental, repelente de mosquitos.", "Bolsas de basura resistentes para el traslado."], "horarios": "9 am a 6 pm", "contacto": null}, {"nombre": "Universidad Metropolitana Capellania Unimet", "zona": "Terrazas del Avila, Este de Caracas", "lat": 10.5145, "lng": -66.8195, "exact": false, "rubro": "Higiene, No perecederos y Medicinas", "vigencia": "Operativo", "articulos": ["Agua potable,", "Alimentos no perecederos,", "Insumos medicos,", "Kit de cuidado personal"], "horarios": "8 am a 6 pm hasta el 03/06", "contacto": null}, {"nombre": "Colegio Mater Salvatoris", "zona": "Las Mercedes", "lat": 10.487, "lng": -66.857, "exact": false, "rubro": "Higiene, No perecederos y Medicinas", "vigencia": "Operativo", "articulos": ["Bolsas de Laparotomia", "Gel ultrasonido", "Adhesivo médico", "Gasas", "Agua Oxigenada", "Leche en polvo, compotas, galletas", "Guantes", "Tapabocas", "Desinfectante", "Cloro", "Kit de higiene personal (papel higiénico, toallas sanitarias, toallas húmedas, cepillo de dientes, crema dental, pañales de adultos y bebés)"], "horarios": "3 pm a 6 pm", "contacto": null}, {"nombre": "Universidad Moteavila", "zona": "Boleita", "lat": 10.5026525, "lng": -66.8177383, "exact": true, "rubro": "Insumos médicos", "vigencia": "Operativo", "articulos": ["Insumos médicos (alcohol, agua oxigenada, antihipertensivos, antialérgicos, antiinflamatorios, antiácidos, dipirona, diclofenac, jeringas, gasas, algodón, solución salina 0,9%, alimentos no perecederos)."], "horarios": "10 am A 3 pm", "contacto": null}, {"nombre": "Plaza Los Palos Grandes", "zona": "Urbanización Los Palos Grandes, Chacao", "lat": 10.501, "lng": -66.8465, "exact": false, "rubro": "Insumos médicos", "vigencia": "Operativo", "articulos": ["Ofrecen atención primaria para disminuir afluencia en centros hospitalarios."], "horarios": "Todo el día", "contacto": null}, {"nombre": "Sagrada Familia", "zona": "Av. Casanova, El Recreo", "lat": 10.4934, "lng": -66.8709, "exact": false, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Materiales de rescate", "Agua potable y suero", "Alimentos no perecedero"], "horarios": "10am a 4pm", "contacto": null}, {"nombre": "Club Santa Paula", "zona": "Av. circunvalación del Sol. Urb. Santa Paula, El Cafetal.", "lat": 10.46618, "lng": -66.8359616, "exact": true, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Alimentos no perecederos", "Cajas y bolsas", "Medicinas, guantes quirúrgicos", "Agua y bebidas con electrolitos", "Ropa, sábanas y toallas"], "horarios": "10am a 4pm", "contacto": null}, {"nombre": "Instituto de Diseño de Caracas La Castellana", "zona": "Chacao", "lat": 10.501, "lng": -66.8544, "exact": false, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Agua potable en presentación individual,", "Alimentos no peredederos (enlatados con abrefacil, barras energeticas, arroz, pasta, harina, granos, galletas, frutos secos)", "Ropa y mantas limpias, organizadas por talla si es posible,", "Botiquín de primeros auxilios (gasas, guatas, alcohol, antisepticos, analgesicos básico solucion 0.9% y 0.45%, mascarillas para nebulizar, duovent 15 ml, dextrosa al 5%) .", "Tela para Sábanas."], "horarios": "7 am en adelante", "contacto": null}, {"nombre": "Congio San Ignacio  Casa Loyola", "zona": "Chacao", "lat": 10.4945, "lng": -66.853, "exact": false, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Salud (suero fisiológico, gasa vendas, agua oxigenada, Alcohol, Guantes de latex)", "Alimentos (no perecederos, barras energeticas, formula de nutricion infantil, agua potable)", "Logística y Abrigo (Cobijas, Sábanas, Carpas, Sacos de dormir, Colchonetas, Mantas térmicas, impermebles)", "Herramientas (Picos, palas, mandarrias, martillos, Guantes de cosntrucción, Cascos, taladros, piquetas, tapabocas, linternas, pilas, Esmeril de contacto, Sierras)", "Tecnología (antenas starlink  mini, Estaciones de entrega portatil (ecoflow o similares)"], "horarios": "9 am a 5 pm", "contacto": null}, {"nombre": "Voluntarios El bosque", "zona": "El bosque diagonal al club chino y el Rest Dinasty en un porton verde.", "lat": 10.497835, "lng": -66.867363, "exact": true, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Medicamentos", "Insumos médicos", "Kit de higiene personal adultos, y niños", "Pan de Sandwich, Riquesa, diablitos, Galletas, Compotas", "Kit Lúdicos para niños (juguetes, crayones, libros para colorear, juegos de mesa)", "Dinero"], "horarios": "Desde las 9 am aprox", "contacto": "+584122545340"}, {"nombre": "Universidad Católica Andrés Bello (UCAB)", "zona": "Estacionamiento de la Iglesia UCAB. Av. Teherán, Montalbán", "lat": 10.4784, "lng": -66.9192, "exact": false, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Alimentos no perecederos", "Medicinas (Dipirona, Vitamina K, Alcohol, Solución 09) Gasas y vendas", "Herramientas", "Ropa, sábanas y toallas"], "horarios": "Por validar", "contacto": null}, {"nombre": "Bajo el Arbol Quinta Arboleda La Castellana", "zona": "La Castellana", "lat": 10.5019305, "lng": -66.8565855, "exact": true, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Agua", "Alimentos no perecederos", "Higiene personal", "Insumos medicos", "Linternas y baterías externas, guantes de cosntrucción, cascos,", "Sábanas y almohadas."], "horarios": "Desde las 9 am aprox", "contacto": null}, {"nombre": "Iglesia Chiquinquirá", "zona": "La Florida", "lat": 10.501564, "lng": -66.8765383, "exact": true, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Agua", "Alimentos no perecederos", "Insumos medicos", "Primeros auxilios", "Guantes de seguridad, linternas, cascos, herramientas, lonas, carpas", "Cobijas, almohadas"], "horarios": "Desde las 9 am aprox", "contacto": null}, {"nombre": "Sagrada Familia", "zona": "La Tahona", "lat": 10.4384215, "lng": -66.8566303, "exact": true, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Alimentos no perecederos", "Alimento para mascotas", "Medicinas", "Herramientas", "Ropa, sábanas y toallas"], "horarios": "9:30am a 12:30pm / 2:30pm a 6:30pm", "contacto": null}, {"nombre": "Plaza Alfredo Sadel", "zona": "Las Mercedes", "lat": 10.482008, "lng": -66.8613349, "exact": true, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Linternas y baterías", "Alimentos no perecederos", "Ropa", "Comida preparada (en envases desechables)"], "horarios": "8am - 6pm", "contacto": null}, {"nombre": "Tu Gruero AV.  El Carmen Los Dos Caminos", "zona": "Los dos caminos", "lat": 10.4959145, "lng": -66.8305498, "exact": true, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Agua", "Alimentos no perecederos", "Insumos medicos", "Primeros auxilios", "Guantes de seguridad, linternas, cascos, herramientas, lonas, carpas", "Cobijas, almohadas", "Dinero"], "horarios": "No especificado", "contacto": "+584129428693"}, {"nombre": "Parque del Este", "zona": "Miranda", "lat": 10.4975, "lng": -66.8395, "exact": false, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": [], "horarios": "Todo el día", "contacto": null}, {"nombre": "Cáritas venezuela Cede Nacional Montalbán", "zona": "Montalbán", "lat": 10.479, "lng": -66.9185, "exact": false, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Bebidas (agua potable, pastillas o sistemas de potabilización)", "Alimentos no perecederos (Arroz, pasta, Harina pan, Atún, sardinas, granos enlatados, compotas)", "Productos de higiene personal (Pañales de adultos y niños, Toallas sanitarias, Toallas Húmedas, Desodorantes, Shampoo, Jabón, cepillo y pasta dental.", "Medicamentos de primera necesidad", "Colchonetas, sábanas, linternas, baterías.", "Dinero.", "Voluntariado."], "horarios": "Todo el día", "contacto": null}, {"nombre": "Iglesia La Paz", "zona": "Montalbán I, Municipio Libertador", "lat": 10.4805, "lng": -66.916, "exact": false, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Alimentos no perecederos", "Cajas y bolsas, cinta de embalar, marcadores, Hojas blancas", "Medicinas, guantes quirúrgicos", "Agua potable", "Ropa, sábanas y toallas"], "horarios": "9:30am a 12:30pm / 2:30pm a 6:30pm", "contacto": null}, {"nombre": "Universidad Central de Venezuela (UCV)", "zona": "Plaza del Rectorado de la Universidad.", "lat": 10.4913, "lng": -66.8905, "exact": false, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Alimentos no perecederos", "Cajas y bolsas, cinta de embalar, marcadores, Hojas blancas", "Medicinas, guantes quirúrgicos", "Agua potable", "Ropa, sábanas y toallas"], "horarios": "Todo el día", "contacto": null}, {"nombre": "Sede del Sistema de Orquestas y Coros", "zona": "Quebrada Onda", "lat": 10.5058, "lng": -66.9166, "exact": false, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Cobijas y Sabanas", "Alimentos no perecederos", "Marcadores y cinta adhesiva"], "horarios": "9am - 3pm", "contacto": null}, {"nombre": "Hogar bambi", "zona": "San Bernardino", "lat": 10.5115, "lng": -66.904, "exact": false, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Sabanas, toallas", "Fórmula infantil, leche en polvo", "Cunas armables tipo graco"], "horarios": "8 am en adelante", "contacto": "+584143081107"}, {"nombre": "Plaza Francia de Altamira", "zona": "Urbanización Altamira, Chacao", "lat": 10.4975, "lng": -66.8489, "exact": false, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Alimentos no perecederos", "Kit de Higiene personal", "Medicamentos de uso común", "Mantas, Carpas, Colchones, Sleeping bag, linternas"], "horarios": "Todo el día", "contacto": null}, {"nombre": "Parroquia El Buen Pastor", "zona": "Urbanización Bello Campo, Chacao", "lat": 10.495, "lng": -66.85, "exact": false, "rubro": "Mixtos", "vigencia": "Operativo", "articulos": ["Alimentos no perecederos", "Alimento para mascotas", "Medicinas", "Herramientas", "Ropa, sábanas y toallas"], "horarios": "Todo el día", "contacto": null}];
 
-const map = L.map('map').setView([10.495, -66.87], 12);
+const map = L.map('map', {
+  tap: false // Desactiva delay de clics en librerías móviles antiguas
+}).setView([10.495, -66.87], 12);
+
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; OpenStreetMap contributors',
   maxZoom: 19
@@ -94,17 +124,21 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 const listEl = document.getElementById('list');
 const previewEl = document.getElementById('preview');
 const searchInput = document.getElementById('searchInput');
-
 const bounds = [];
 
 places.forEach((p, i) => {
   const color = p.exact ? '#2e7d32' : '#e67e22';
   const marker = L.circleMarker([p.lat, p.lng], {
-    radius: 8, fillColor: color, color: '#fff', weight: 2, fillOpacity: 0.95
+    radius: 9, fillColor: color, color: '#fff', weight: 2, fillOpacity: 0.95
   }).addTo(map);
+  
+  // Modificado para que el popup avise de forma clara tanto en web como celular
   marker.bindPopup(
-    `<div class="popup-title">${p.nombre}</div><div class="popup-sub">${p.zona} &middot; ${p.rubro}</div><div class="popup-hint">Ver detalles en el panel izquierdo &darr;</div>`
+    `<div class="popup-title">${p.nombre}</div>
+     <div class="popup-sub">${p.zona}</div>
+     <div class="popup-hint">✨ Ver detalles abajo</div>`
   );
+  
   marker.on('click', () => selectPlace(i, false));
   p.marker = marker;
   bounds.push([p.lat, p.lng]);
@@ -113,44 +147,68 @@ places.forEach((p, i) => {
   item.className = 'item';
   item.dataset.index = i;
   item.innerHTML = `<span class="dot ${p.exact ? 'exact' : 'approx'}"></span>
-    <div><div class="name">${p.nombre}</div><div class="zona">${p.zona}</div><div class="rubro-tag">${p.rubro}</div></div>`;
+    <div>
+      <div class="name">${p.nombre}</div>
+      <div class="zona">${p.zona}</div>
+      <div class="rubro-tag">${p.rubro}</div>
+    </div>`;
   item.addEventListener('click', () => selectPlace(i, true));
   listEl.appendChild(item);
 });
 
-map.fitBounds(bounds, { padding: [30, 30] });
+map.fitBounds(bounds, { padding: [40, 40] });
 
 function selectPlace(i, fly) {
   const p = places[i];
 
   document.querySelectorAll('.item').forEach(el => el.classList.remove('active'));
   const el = document.querySelector(`.item[data-index="${i}"]`);
-  if (el) { el.classList.add('active'); el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+  if (el) { 
+    el.classList.add('active'); 
+    el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); 
+  }
 
-  if (fly) map.flyTo([p.lat, p.lng], 16, { duration: 0.8 });
+  // Comportamiento de zoom optimizado
+  if (fly) {
+    map.flyTo([p.lat, p.lng], 15, { duration: 0.8 });
+  } else {
+    map.panTo([p.lat, p.lng]);
+  }
   p.marker.openPopup();
 
   const itemsHtml = p.articulos && p.articulos.length
     ? `<ul class="ph-items">${p.articulos.map(a => `<li>${a}</li>`).join('')}</ul>`
-    : `<div class="ph-horario" style="color:#999;">No especificado</div>`;
+    : `<div class="ph-horario" style="color:#999; font-style:italic;">No especificado</div>`;
 
   const contactoHtml = p.contacto
     ? `<div class="ph-section-title">Contacto</div><div class="ph-contacto">${p.contacto}</div>`
     : '';
 
+  // Renderizado con el nuevo botón destacado para abrir directo en Google Maps app/web
   previewEl.innerHTML = `
     <div class="ph-name">${p.nombre}</div>
     <div class="ph-zona">${p.zona}</div>
-    <span class="ph-tag ${p.exact ? 'exact' : 'approx'}">${p.exact ? 'Ubicación exacta' : 'Ubicación aproximada'}</span>
-    <span class="ph-tag rubro">${p.rubro}</span>
+    <div style="margin-top: 4px;">
+      <span class="ph-tag ${p.exact ? 'exact' : 'approx'}">${p.exact ? '📍 Ubicación exacta' : '🔍 Ubicación aproximada'}</span>
+      <span class="ph-tag rubro">${p.rubro}</span>
+    </div>
     <div class="ph-section-title">Horario</div>
     <div class="ph-horario">${p.horarios}</div>
     <div class="ph-section-title">Está recibiendo</div>
     ${itemsHtml}
     ${contactoHtml}
-    <div class="ph-coords">${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}</div>
-    <a class="ph-link" href="https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}" target="_blank" rel="noopener">Abrir en Google Maps ↗</a>
+    <div class="ph-coords">Coordenadas: ${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}</div>
+    
+    <!-- NUEVO BOTÓN MAPS OPTIMIZADO PARA MÓVILES -->
+    <a class="ph-btn-maps" href="https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}" target="_blank" rel="noopener">
+      🗺️ Abrir ruta en Google Maps
+    </a>
   `;
+  
+  // En móviles, hace un pequeño scroll automático hacia el detalle para que el usuario note que se abrió
+  if(window.innerWidth <= 768) {
+     previewEl.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }
 }
 
 searchInput.addEventListener('input', () => {
