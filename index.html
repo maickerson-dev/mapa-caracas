@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Mapa de Ubicaciones</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+  #app { display: flex; flex-direction: column; height: 100%; }
+  header { padding: 14px 18px; background: #1a1a2e; color: #fff; flex-shrink: 0; }
+  header h1 { margin: 0; font-size: 18px; }
+  header p { margin: 4px 0 0; font-size: 13px; color: #cfd2e0; }
+  .legend { display: flex; gap: 16px; padding: 8px 18px; background: #f4f4f7; font-size: 12px; border-bottom: 1px solid #ddd; flex-shrink: 0; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .dot.exact { background: #2e7d32; }
+  .dot.approx { background: #e67e22; }
+
+  #main { flex: 1; display: flex; min-height: 0; }
+
+  #sidebar { width: 320px; flex-shrink: 0; border-right: 1px solid #ddd; display: flex; flex-direction: column; background: #fff; }
+  #search { padding: 10px; border-bottom: 1px solid #eee; flex-shrink: 0; }
+  #search input { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; }
+  #list { flex: 1; overflow-y: auto; }
+  .item { padding: 10px 14px; border-bottom: 1px solid #f0f0f0; cursor: pointer; display: flex; align-items: flex-start; gap: 8px; }
+  .item:hover { background: #f7f7fb; }
+  .item.active { background: #e8eefc; border-left: 3px solid #3355dd; }
+  .item .dot { margin-top: 4px; flex-shrink: 0; }
+  .item .name { font-size: 13.5px; font-weight: 600; color: #222; }
+  .item .zona { font-size: 12px; color: #777; margin-top: 1px; }
+
+  #preview { border-top: 2px solid #eee; padding: 14px; background: #fafafa; flex-shrink: 0; min-height: 90px; }
+  #preview .ph-name { font-size: 15px; font-weight: 700; color: #1a1a2e; }
+  #preview .ph-zona { font-size: 13px; color: #555; margin: 4px 0 8px; }
+  #preview .ph-tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; color: #fff; display: inline-block; margin-right: 6px; }
+  #preview .ph-tag.exact { background: #2e7d32; }
+  #preview .ph-tag.approx { background: #e67e22; }
+  #preview .ph-coords { font-size: 11px; color: #999; margin-top: 8px; font-family: monospace; }
+  #preview .ph-placeholder { color: #999; font-size: 13px; }
+  #preview .ph-link { display: inline-block; margin-top: 8px; font-size: 12px; color: #3355dd; text-decoration: none; }
+
+  #map { flex: 1; }
+
+  @media (max-width: 700px) {
+    #main { flex-direction: column; }
+    #sidebar { width: 100%; height: 45%; border-right: none; border-bottom: 1px solid #ddd; }
+    #map { height: 55%; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>📍 Ubicaciones</h1>
+    <p>33 puntos en Caracas — clic en un nombre de la lista o en un pin del mapa</p>
+  </header>
+  <div class="legend">
+    <span><i class="dot exact"></i> Ubicación exacta</span>
+    <span><i class="dot approx"></i> Ubicación aproximada (por zona)</span>
+  </div>
+  <div id="main">
+    <div id="sidebar">
+      <div id="search"><input type="text" id="searchInput" placeholder="Buscar lugar o zona..."></div>
+      <div id="list"></div>
+      <div id="preview">
+        <div class="ph-placeholder">Selecciona un lugar de la lista o del mapa para ver su información aquí.</div>
+      </div>
+    </div>
+    <div id="map"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const places = [
+  { name: "Colegio Cristo Rey de Altamira", zona: "Altamira", lat: 10.5057299, lng: -66.8490399, exact: true },
+  { name: "Sagrada Familia", zona: "Av. Casanova, El Recreo", lat: 10.4934, lng: -66.8709, exact: false },
+  { name: "Centro Comercial El Recreo", zona: "Sabana Grande", lat: 10.4931, lng: -66.8712, exact: false },
+  { name: "Club Santa Paula", zona: "El Cafetal", lat: 10.4661800, lng: -66.8359616, exact: true },
+  { name: "Universidad Monteávila", zona: "Boleíta", lat: 10.5026525, lng: -66.8177383, exact: true },
+  { name: "Misenplas", zona: "Chacao", lat: 10.4939, lng: -66.8524, exact: false },
+  { name: "Instituto de Diseño de Caracas", zona: "La Castellana", lat: 10.5010, lng: -66.8544, exact: false },
+  { name: "Centro Tata Bello Campo", zona: "Chacao", lat: 10.4946390, lng: -66.8504954, exact: true },
+  { name: "Colegio San Ignacio - Casa Loyola", zona: "Chacao", lat: 10.4945, lng: -66.8530, exact: false },
+  { name: "Voluntarios El Bosque", zona: "El Bosque (portón verde, diagonal Club Chino)", lat: 10.4978350, lng: -66.8673630, exact: true },
+  { name: "Colegio San Agustín", zona: "El Marqués", lat: 10.4915, lng: -66.8318, exact: false },
+  { name: "Universidad Católica Andrés Bello (UCAB)", zona: "Montalbán", lat: 10.4784, lng: -66.9192, exact: false },
+  { name: "Bajo el Árbol - Quinta Arboleda", zona: "La Castellana", lat: 10.5019305, lng: -66.8565855, exact: true },
+  { name: "Iglesia Chiquinquirá", zona: "La Florida", lat: 10.5015640, lng: -66.8765383, exact: true },
+  { name: "Sagrada Familia (La Tahona)", zona: "La Tahona", lat: 10.4384215, lng: -66.8566303, exact: true },
+  { name: "Plaza Alfredo Sadel", zona: "Las Mercedes", lat: 10.4820080, lng: -66.8613349, exact: true },
+  { name: "Colegio Mater Salvatoris", zona: "Las Mercedes", lat: 10.4870, lng: -66.8570, exact: false },
+  { name: "Furore Ristorante", zona: "Las Mercedes", lat: 10.4862, lng: -66.8555, exact: false },
+  { name: "Pepitería 13", zona: "Las Mercedes", lat: 10.4865, lng: -66.8548, exact: false },
+  { name: "Tu Gruero", zona: "Av. El Carmen, Los Dos Caminos", lat: 10.4959145, lng: -66.8305498, exact: true },
+  { name: "Chef Campus", zona: "Los Palos Grandes", lat: 10.5008, lng: -66.8471, exact: false },
+  { name: "Parque del Este", zona: "Miranda", lat: 10.4975, lng: -66.8395, exact: false },
+  { name: "Cáritas Venezuela - Sede Nacional", zona: "Montalbán", lat: 10.4790, lng: -66.9185, exact: false },
+  { name: "Iglesia La Paz", zona: "Montalbán I", lat: 10.4805, lng: -66.9160, exact: false },
+  { name: "Cáritas de Venezuela - Sede Montalbán", zona: "Montalbán", lat: 10.4788, lng: -66.9188, exact: false },
+  { name: "Universidad Central de Venezuela (UCV)", zona: "Plaza del Rectorado", lat: 10.4913, lng: -66.8905, exact: false },
+  { name: "Sede del Sistema de Orquestas y Coros", zona: "Quebrada Onda", lat: 10.5058, lng: -66.9166, exact: false },
+  { name: "Hogar Bambi", zona: "San Bernardino", lat: 10.5115, lng: -66.9040, exact: false },
+  { name: "Universidad Metropolitana - Capellanía Unimet", zona: "Terrazas del Ávila", lat: 10.5145, lng: -66.8195, exact: false },
+  { name: "Plaza Francia de Altamira", zona: "Altamira, Chacao", lat: 10.4975, lng: -66.8489, exact: false },
+  { name: "Parroquia El Buen Pastor", zona: "Bello Campo, Chacao", lat: 10.4950, lng: -66.8500, exact: false },
+  { name: "Plaza Los Palos Grandes", zona: "Los Palos Grandes, Chacao", lat: 10.5010, lng: -66.8465, exact: false },
+  { name: "Antigua sede Azú Pastelería", zona: "Las Mercedes", lat: 10.4852603, lng: -66.8641450, exact: true },
+];
+
+const map = L.map('map').setView([10.495, -66.87], 12);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors',
+  maxZoom: 19
+}).addTo(map);
+
+const listEl = document.getElementById('list');
+const previewEl = document.getElementById('preview');
+const searchInput = document.getElementById('searchInput');
+
+const bounds = [];
+let activeIndex = null;
+
+places.forEach((p, i) => {
+  const color = p.exact ? '#2e7d32' : '#e67e22';
+  const marker = L.circleMarker([p.lat, p.lng], {
+    radius: 8,
+    fillColor: color,
+    color: '#fff',
+    weight: 2,
+    fillOpacity: 0.95
+  }).addTo(map);
+  marker.bindPopup(
+    `<div style="font-weight:600;margin-bottom:2px;">${p.name}</div>${p.zona}`
+  );
+  marker.on('click', () => selectPlace(i, false));
+  p.marker = marker;
+  bounds.push([p.lat, p.lng]);
+
+  const item = document.createElement('div');
+  item.className = 'item';
+  item.dataset.index = i;
+  item.innerHTML = `<span class="dot ${p.exact ? 'exact' : 'approx'}"></span>
+    <div><div class="name">${p.name}</div><div class="zona">${p.zona}</div></div>`;
+  item.addEventListener('click', () => selectPlace(i, true));
+  listEl.appendChild(item);
+});
+
+map.fitBounds(bounds, { padding: [30, 30] });
+
+function selectPlace(i, fly) {
+  activeIndex = i;
+  const p = places[i];
+
+  document.querySelectorAll('.item').forEach(el => el.classList.remove('active'));
+  const el = document.querySelector(`.item[data-index="${i}"]`);
+  if (el) {
+    el.classList.add('active');
+    el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  if (fly) {
+    map.flyTo([p.lat, p.lng], 16, { duration: 0.8 });
+  }
+  p.marker.openPopup();
+
+  previewEl.innerHTML = `
+    <div class="ph-name">${p.name}</div>
+    <div class="ph-zona">${p.zona}</div>
+    <span class="ph-tag ${p.exact ? 'exact' : 'approx'}">${p.exact ? 'Ubicación exacta' : 'Ubicación aproximada'}</span>
+    <div class="ph-coords">${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}</div>
+    <a class="ph-link" href="https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}" target="_blank" rel="noopener">Abrir en Google Maps ↗</a>
+  `;
+}
+
+searchInput.addEventListener('input', () => {
+  const q = searchInput.value.trim().toLowerCase();
+  document.querySelectorAll('.item').forEach((el, i) => {
+    const p = places[i];
+    const match = p.name.toLowerCase().includes(q) || p.zona.toLowerCase().includes(q);
+    el.style.display = match ? 'flex' : 'none';
+  });
+});
+</script>
+</body>
+</html>
